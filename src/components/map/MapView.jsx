@@ -8,7 +8,7 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { useNavigate } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import logo from "../../assets/logo.png";
-import L from "leaflet";
+
 
 
 export default function MapView() {
