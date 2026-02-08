@@ -196,8 +196,9 @@ async function saveMarker() {
             <Marker
                 key={m.id}
                 position={[m.latitude, m.longitude]}
-                draggable
                  icon={defaultIcon}
+                draggable
+                
                 eventHandlers={{
                 dragend: async (e) => {
                     const user = await getCurrentUser();
