@@ -14,6 +14,8 @@ const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
   const [position, setPosition] = useState([13.6929, -89.2182]);
 const [markers, setMarkers] = useState([]);
+const [message, setMessage] = useState("");
+
 const editableIcon = new L.Icon({
   iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/blue.png",
   iconSize: [32, 32],
@@ -69,9 +71,15 @@ async function saveMarker() {
     title
   });
 
-  setShowPopup(false);
-  setTitle("");
+  setMessage("Ubicación guardada ✔");
+
+  loadMarkers(); // vuelve a cargar puntos
+
+  setTimeout(() => {
+    setMessage("");
+  }, 2000);
 }
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -134,27 +142,42 @@ async function saveMarker() {
 >
   {showPopup && (
     <Popup>
-      <div className="space-y-2">
-        <p className="text-sm">
-          Lat: {markerPosition[0].toFixed(5)} <br />
-          Lng: {markerPosition[1].toFixed(5)}
-        </p>
+  <div className="w-56 space-y-3">
+    <div className="text-xs text-gray-600">
+      <p>Lat: {markerPosition[0].toFixed(5)}</p>
+      <p>Lng: {markerPosition[1].toFixed(5)}</p>
+    </div>
 
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título"
-          className="border px-2 py-1 w-full rounded"
-        />
+    <input
+      value={title}
+      onChange={(e) => setTitle(e.target.value)}
+      placeholder="Título del punto"
+      className="
+        w-full px-3 py-2 rounded-lg
+        border border-gray-300
+        focus:outline-none focus:ring-2 focus:ring-blue-500
+      "
+    />
 
-        <button
-          onClick={saveMarker}
-          className="w-full bg-blue-600 text-white py-1 rounded"
-        >
-          Guardar ubicación
-        </button>
-      </div>
-    </Popup>
+    <button
+      onClick={saveMarker}
+      className="
+        w-full py-2 rounded-lg
+        bg-blue-600 text-white
+        hover:bg-blue-700 transition
+        font-medium
+      "
+    >
+      Guardar ubicación
+    </button>
+
+    {message && (
+      <p className="text-green-600 text-sm text-center">
+        {message}
+      </p>
+    )}
+  </div>
+</Popup>
   )}
 </Marker>
 
