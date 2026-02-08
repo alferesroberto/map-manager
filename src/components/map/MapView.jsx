@@ -1,6 +1,10 @@
 import { MapContainer, TileLayer, Marker, Tooltip, Popup } from "react-leaflet";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import L from "leaflet";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
 import { useNavigate } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import logo from "../../assets/logo.png";
@@ -8,6 +12,14 @@ import L from "leaflet";
 
 
 export default function MapView() {
+const defaultIcon = new L.Icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34]
+});
+
   const [markerPosition, setMarkerPosition] = useState([13.6929, -89.2182]);
 const [title, setTitle] = useState("");
 const [showPopup, setShowPopup] = useState(false);
@@ -30,28 +42,26 @@ const normalIcon = new L.Icon({
 
 
   // Cargar marcador
- useEffect(() => {
-  const loadMarkers = async () => {
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+ async function loadMarkers() {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
-    if (!user) return;
+  if (!user) return;
 
-    const { data, error } = await supabase
-      .from("markers")
-      .select("id, latitude, longitude")
-      .eq("user_id", user.id);
+  const { data, error } = await supabase
+    .from("markers")
+    .select("id, latitude, longitude, title")
+    .eq("user_id", user.id);
 
-    if (error) {
-      console.error(error);
-    } else {
-      setMarkers(data);
-    }
-  };
-
+  if (error) console.error(error);
+  else setMarkers(data);
+}
+useEffect(() => {
   loadMarkers();
 }, []);
+
+
 
 const getCurrentUser = async () => {
   const {
@@ -187,6 +197,7 @@ async function saveMarker() {
                 key={m.id}
                 position={[m.latitude, m.longitude]}
                 draggable
+                 icon={defaultIcon}
                 eventHandlers={{
                 dragend: async (e) => {
                     const user = await getCurrentUser();
