@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, Popup } from "react-leaflet";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -8,10 +8,11 @@ import L from "leaflet";
 
 
 export default function MapView() {
+  const [markerPosition, setMarkerPosition] = useState([13.6929, -89.2182]);
+const [title, setTitle] = useState("");
+const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
-
   const [position, setPosition] = useState([13.6929, -89.2182]);
-  const [title] = useState("Mi ubicación");
 const [markers, setMarkers] = useState([]);
 const editableIcon = new L.Icon({
   iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/blue.png",
@@ -57,8 +58,20 @@ const getCurrentUser = async () => {
 
   return user;
 };
+async function saveMarker() {
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return;
 
+  await supabase.from("markers").upsert({
+    user_id: userData.user.id,
+    latitude: markerPosition[0],
+    longitude: markerPosition[1],
+    title
+  });
 
+  setShowPopup(false);
+  setTitle("");
+}
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -107,35 +120,44 @@ const getCurrentUser = async () => {
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-
-          <Marker
-  position={position}
+<Marker
+  position={markerPosition}
   draggable
   icon={editableIcon}
   eventHandlers={{
-    dragend: async (e) => {
-      const latitude = e.target.getLatLng().lat;
-      const longitude = e.target.getLatLng().lng;
-
-      setPosition([latitude, longitude]);
-
-      const user = await getCurrentUser();
-      if (!user) return;
-
-      await supabase.from("markers").upsert({
-        user_id: user.id,
-        title,
-        latitude,
-        longitude
-      });
+    dragend: (e) => {
+      const { lat, lng } = e.target.getLatLng();
+      setMarkerPosition([lat, lng]);
+      setShowPopup(true);
     }
   }}
 >
- <Tooltip direction="top" offset={[0, -20]} opacity={0.9}>
-  Arrástrame
-</Tooltip>
+  {showPopup && (
+    <Popup>
+      <div className="space-y-2">
+        <p className="text-sm">
+          Lat: {markerPosition[0].toFixed(5)} <br />
+          Lng: {markerPosition[1].toFixed(5)}
+        </p>
 
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Título"
+          className="border px-2 py-1 w-full rounded"
+        />
+
+        <button
+          onClick={saveMarker}
+          className="w-full bg-blue-600 text-white py-1 rounded"
+        >
+          Guardar ubicación
+        </button>
+      </div>
+    </Popup>
+  )}
 </Marker>
+
 
           {markers.map((m) => (
             <Marker
